@@ -75,6 +75,8 @@ When you launch `dsh --profile web` over SSH, the URL line still prints but the 
 
 Each browser session selects a shipped preset (`standard` by default). The Agent presets settings page changes the default and edits preset child plugins; saves persist in `$DSH_HOME/profiles/web/cordis.patch.yml`. Creator's plugin-management tool is enabled only when the Host provides an editable profile.
 
+The shipped Standard preset reads its persona prefix from `DSH_EXCEL_PERSONA_PREFIX` when set; otherwise it uses its coding-agent prefix. This changes only the prefix section, retaining tool and skill guidance. A profile replacement of Standard's persona config takes precedence. The [Excel launcher](../../../excel/README.md) sets the Excel prefix explicitly.
+
 -----
 
 <a id="understand-the-implementation"></a>
