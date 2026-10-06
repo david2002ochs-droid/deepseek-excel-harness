@@ -48,6 +48,7 @@ try {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     !/KEY|SECRET|TOKEN|PASSWORD/iu.test(key) && !/^EXCEL_HARNESS_URL$/iu.test(key)))
   env.DSH_HOME = home
+  env.DSH_EXCEL_PERSONA_PREFIX = 'You are an Excel agent.'
   await launch({
     // Same supported dsh CLI/profile entry used by the repository's dsh script.
     backend: { command: process.execPath, args: ['--import', 'tsx/esm', 'apps/cli/src/bin.ts', '--profile', 'web', '--patch', join(directory, 'context.patch.yml'), '--no-open', '--host', '127.0.0.1', '--port', '3080', '--public-url', 'https://localhost:3443', '--trusted-host', 'localhost:3443'], cwd: root },

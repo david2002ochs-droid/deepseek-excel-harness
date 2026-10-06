@@ -75,6 +75,8 @@ dsh --profile web --no-open --port 8080
 
 每个浏览器会话选择一个随发行版交付的 preset（默认 `standard`）。Agent 预设设置页可更改默认项并编辑预设的子插件；保存结果持久化到 `$DSH_HOME/profiles/web/cordis.patch.yml`。只有 Host 提供可编辑的 profile 时，Creator 的插件管理工具才会启用。
 
+随发行版交付的 Standard 预设在设置了 `DSH_EXCEL_PERSONA_PREFIX` 时读取该变量作为 persona 前缀，否则使用 coding agent 前缀。此设置只更改前缀段落，保留工具和技能指导。profile 对 Standard persona 配置的替换优先。[Excel 启动器](../../../excel/README.zh.md)显式设置 Excel 前缀。
+
 -----
 
 <a id="understand-the-implementation"></a>

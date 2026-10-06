@@ -8,7 +8,7 @@ import yaml from 'js-yaml'
 import { composeEntries, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
 import { chromium, type Browser, type Page } from 'playwright'
-import { afterEach, describe, expect, it, onTestFailed } from 'vitest'
+import { afterEach, describe, expect, it, onTestFailed, vi } from 'vitest'
 import {
   assertFixtureInventory, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, webSnapshotMode, type WebScaffold,
@@ -28,6 +28,8 @@ describe.skipIf(MODE === 'record')('web e2e: recorded Excel context', () => {
   let parent: Server | undefined
   let directory: string | undefined
 
+  afterEach(() => vi.unstubAllEnvs())
+
   afterEach(async () => {
     try { await browser?.close() } finally {
       try { await scaffold?.close() } finally {
@@ -43,6 +45,7 @@ describe.skipIf(MODE === 'record')('web e2e: recorded Excel context', () => {
   })
 
   it('captures the trusted parent and reopens the recorded cell in its originating workbook', async () => {
+    vi.stubEnv('DSH_EXCEL_PERSONA_PREFIX', 'You are an Excel agent.')
     const recorded = fixtureUserPrompts(await readFile(FIXTURE, 'utf8'))[0]!
     const marker = recorded.indexOf('[Excel context]\n')
     const prompt = recorded.slice(0, marker).trimEnd()
