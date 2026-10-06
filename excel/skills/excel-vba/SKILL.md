@@ -19,6 +19,12 @@ Pane metadata is captured on user submission. Its id is a pane binding, not a CO
 
 After an actual denial in a confined shell call, retry the exact helper command through the existing shell tool's per-call `sandbox_permissions` and `justification`. `PROCESS_ACCESS_DENIED` preserves a safe EPERM/EACCES diagnosis without identifying the restriction's source; explain that specific access refusal. `PROCESS_UNAVAILABLE` is a generic process failure: diagnose it before retrying, without inferring denial. Do not disable the product sandbox or change Excel trust/security settings. A failed inventory proves no uniqueness.
 
+## Research when needed
+
+When correctness depends on uncertain Excel/VBA API details, version support or runtime behavior, reuse relevant findings already available in the task. If they are insufficient, use the available Microsoft Learn MCP, selecting operations from the tools and schemas visible in this session. Search for the exact object/member and relevant symptom or version, then fetch the relevant official page; fetch directly when its URL is known. Apply documentation for Excel/VBA and the target environment, and stop when the implementation decision is supported. If Learn is unavailable, consult official documentation through an already available tool or state the unresolved gap.
+
+Consult only relevant existing xlflow references, project knowledge cards or repository examples, including `../xlflow/references/object-model-traps.md` for the listed runtime traps. Translate the finding into concrete workbook preconditions and a focused behavior or event check using the workflow below. Treat undocumented observations as specific to the observed environment, and cite the source when it materially determines the implementation.
+
 ## Route the change and its evidence
 
 | Work | Guidance and required evidence |

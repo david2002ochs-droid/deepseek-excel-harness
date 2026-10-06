@@ -11,6 +11,10 @@ kind: package-library
 
 [skill](SKILL.md) 使用 [workbook.mjs](scripts/workbook.mjs) 验证任务窗格捕获的本地定位信息，并操作唯一打开的原始工作簿。[inventory.ps1](scripts/inventory.ps1) 在每个 Excel 进程中通过原生 Windows 句柄和 COM 读取工作簿身份。清单读取和验证均不会打开、关闭、保存工作簿，也不会修改工作簿或安全设置。产品将整个 skill 目录复制到 `<home>/skills/excel-vba`；辅助程序使用 `<home>/runtime/xlflow-0.35.0`，并在执行前检查 CLI（命令行界面）和桥接程序的哈希值。
 
+## 资料查证指引
+
+skill 的[针对性资料查证指引](SKILL.md#research-when-needed) 要求在 Excel/VBA 细节仍不确定时查询 Microsoft Learn。它使用可用工具和相关的现有参考资料；skill 本身不会配置 Learn 连接，也不会替代工作簿行为检查。
+
 ## 请求与源码归属
 
 运行 `node "<installed skill>/scripts/workbook.mjs" "<request.json>"`。请求包含 `action`、当前请求的任务窗格 `context`，以及用于命令的字符串数组 `args`。上下文使用 `{workbook:{id,path},worksheet:{id,name},selection:{workbookId,address},observedAt}`。成功结果返回 `ok`、目标身份，以及适用时的 `project`、`exitCode` 和完整的 xlflow JSON `output`。拒绝结果返回 `ok:false`、`error.code` 和说明修正方法的 `error.message`；进程退出码非零。模块导出 `validateBinding(context, operations)` 和 `workbookRequest(request, operations)` 供集成和测试使用；生产调用方可以提供 `operations.home`，其余操作应保持原生实现。

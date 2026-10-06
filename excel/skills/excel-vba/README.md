@@ -11,6 +11,10 @@ English | [中文](README.zh.md)
 
 The [skill](SKILL.md) uses [workbook.mjs](scripts/workbook.mjs) to validate the pane's captured local locator and operate on one open original. [inventory.ps1](scripts/inventory.ps1) reads workbook identity through native Windows handles and COM in every Excel process. Neither inventory nor validation opens, closes, saves or changes workbook/security settings. The product copies this whole skill directory into `<home>/skills/excel-vba`; the helper uses `<home>/runtime/xlflow-0.35.0` and checks the CLI/bridge hashes before execution.
 
+## Research guidance
+
+The skill's [targeted research guidance](SKILL.md#research-when-needed) calls for Microsoft Learn lookups when Excel/VBA details remain uncertain. It uses available tools and relevant existing references; the skill does not configure a Learn connection or replace workbook behavior checks.
+
 ## Requests and source ownership
 
 Run `node "<installed skill>/scripts/workbook.mjs" "<request.json>"`. The request contains `action`, the current request's pane `context`, and an `args` string array for commands. Context uses `{workbook:{id,path},worksheet:{id,name},selection:{workbookId,address},observedAt}`. Success returns `ok`, target identity and, when applicable, `project`, `exitCode` and the complete xlflow JSON `output`. A refusal returns `ok:false` with `error.code` and corrective `error.message`; process exit is nonzero. The module exports `validateBinding(context, operations)` and `workbookRequest(request, operations)` for integration/tests; production callers may supply `operations.home` and otherwise keep native operations.
