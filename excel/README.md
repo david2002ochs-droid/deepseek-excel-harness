@@ -41,6 +41,8 @@ npm --prefix excel run sideload
 
 The sideload command uses [Microsoft's Office add-in debugging tooling](https://github.com/OfficeDev/Office-Addin-Scripts/tree/master/packages/office-addin-debugging). With no `--document`, it copies Microsoft's taskpane workbook template to a new file in the system temporary directory and opens that disposable workbook. Do not pass an existing workbook with `--document`. If the taskpane is closed, open **Home > Add-ins > Developer Add-ins > DeepSeek Harness (local)**. Widen the pane as needed for the original Web UI.
 
+If an already-running Excel reports that the add-in is no longer available, its developer registration may be stale. Close only the newly generated disposable test workbook without saving, then press Win+R and run `EXCEL.EXE /x "<generated workbook path>"`, replacing the placeholder with the path reported by sideload. This reopens only that test workbook in a separate Excel process; leave your original workbooks open.
+
 Run `npm --prefix excel run validate` to check the manifest with Microsoft's validator.
 
 ## Stop and limits

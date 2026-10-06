@@ -41,6 +41,8 @@ npm --prefix excel run sideload
 
 旁加载命令使用 [Microsoft Office 加载项调试工具](https://github.com/OfficeDev/Office-Addin-Scripts/tree/master/packages/office-addin-debugging)。未指定 `--document` 时，它会将 Microsoft 的任务窗格工作簿模板复制到系统临时目录中的新文件，并打开该一次性测试工作簿。请勿通过 `--document` 传入现有工作簿。如任务窗格关闭，请打开 **Home > Add-ins > Developer Add-ins > DeepSeek Harness (local)**。根据需要加宽窗格，以显示原版 Web UI。
 
+如果已在运行的 Excel 提示加载项不再可用，其开发注册可能尚未刷新。仅关闭新生成的一次性测试工作簿，不要保存，然后按 Win+R 并运行 `EXCEL.EXE /x "<generated workbook path>"`，将占位内容替换为旁加载命令报告的文件路径。此操作只会在独立的 Excel 进程中重新打开该测试工作簿；请保持原有工作簿打开。
+
 运行 `npm --prefix excel run validate`，使用 Microsoft 验证器检查 manifest。
 
 ## 停止与限制
