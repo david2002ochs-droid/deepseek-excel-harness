@@ -650,6 +650,7 @@ function stepDataKey(turn: number, step: number): string {
 }
 
 function requireStep(data: ConversationLocationData): number {
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- JavaScript Definitions can omit a step despite the declaration.
   if (data.kind === 'step' && data.step !== undefined) return data.step
   throw new Error(`conversation Step data "${data.key}" requires a step`)
 }

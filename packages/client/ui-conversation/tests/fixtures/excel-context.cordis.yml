@@ -1,0 +1,7 @@
+- id: ui-conversation
+  name: '@deepseek-ai/dsh-client-ui-conversation'
+  config:
+    maxConcurrentFileUploads: 2
+    excelContext:
+      parentOrigin: https://localhost:3443
+      timeoutMs: 1000

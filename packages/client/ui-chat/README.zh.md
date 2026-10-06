@@ -39,6 +39,8 @@ Chat 在节点列表外通过一个 `MarkdownDelegateProvider` 提供文件及 H
 
 设置 → 通用设置 → 网页链接默认打开方式控制普通点击 Chat HTTP(S) 链接时的目标：「应用内侧边栏」（默认）打开新的右侧 Sidebar Browser tab，「默认浏览器」打开外部标签页。该设置项位于快捷键之后，仅在 Sidebar Browser 可用时显示。若 Sidebar Browser 未注册，两种选择均使用外部浏览器；带修饰键的点击保留原生行为。`ui-chat.linkOpening` 偏好在回环地址浏览器中持久化，设置无法持久化写入时仅在当前进程内生效。已发送的文件引用及消息日志确认调用的 skill 也可在右侧栏打开预览。文件路径使用当前查看的 Session；skill 名称由该 Session 当前的输入触发源解析。两者悬停或聚焦时均使用正文文件链接的虚线下划线。会话、目录和命令标签仍只作为引用展示。
 
+启用 Conversation 插件的 Excel 上下文选项后，落定的 Assistant 文本引用（如 `[[cite:Sheet1!A1:B2]]`）会变为单元格导航控件。Chat 只通过受限的 `useStepData` hook 读取该回复的 `excelWorkbook` Step 数据，然后请求绑定工作簿的导航 owner。带引号的工作表名支持空格、Unicode 与双单引号转义；格式错误、外部工作簿、反向或越界地址保留为字面文本。流式输出、代码块、行内代码、链接内容及用户输入的引用 token 保留为字面文本。普通客户端没有导航 owner。父窗口导航拒绝、超时或忙碌状态会显示本地化的输入框提示。
+
 <a id="system-prompt-row"></a>
 ## Chat 隐藏的行
 

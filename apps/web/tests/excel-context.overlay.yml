@@ -1,0 +1,9 @@
+- id: ui-conversation
+  config:
+    excelContext:
+      parentOrigin: http://127.0.0.1:3443
+      timeoutMs: 5000
+- id: agent-default-model
+  config:
+    provider: meta
+    model: meta/muse-spark-1.3-contributor

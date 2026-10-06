@@ -195,7 +195,7 @@ export function probeFreePort(): Promise<number> {
  * @param root - host directory the workspace folder is staged in (the scaffold's `workspaceCwd`).
  * @param name - folder name staged and adopted as the workspace.
  */
-export async function connectFreshWorkspace(page: Page, root: string, name = 'workspace'): Promise<void> {
+export async function connectFreshWorkspace(page: Pick<Page, 'getByRole' | 'locator'>, root: string, name = 'workspace'): Promise<void> {
   mkdirSync(join(root, name), { recursive: true })
   await page.getByRole('textbox', { name: 'Choose workspace' }).click()
   const dialog = page.getByRole('dialog', { name: 'Select Workspace Directory' })

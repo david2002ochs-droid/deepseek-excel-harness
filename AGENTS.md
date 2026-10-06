@@ -14,7 +14,7 @@ Record each externally perceptible breaking change immediately in an [upgrade gu
 
 ## Excel deployment
 
-Deliver a plug-and-play Windows installer that makes the original Harness UI reachable from Excel, handles setup and service startup automatically, and requires no terminal commands or token copying. Accept only visibly working, authenticated Excel UI with verified backend/HTTP/WebSocket connections; development launchers remain interim ([details](excel/README.md)).
+Deliver a plug-and-play Windows installer exposing the original Harness UI in Excel, with automatic setup, service startup, and versioned add-in registration updates; require no terminal commands, token copying, or user cache cleanup. Accept only visibly working, authenticated Excel UI with verified backend/HTTP/WebSocket connections and native workbook-context capture; development launchers remain interim ([details](excel/README.md)).
 
 ## Repository layout
 

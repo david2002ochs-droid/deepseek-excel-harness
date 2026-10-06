@@ -41,13 +41,16 @@ import { CHAT_SETTINGS_NAMESPACE, DEFAULT_LINK_OPENING, DEFAULT_TRANSCRIPT_VIEW_
 import { LinkOpeningRow, type LinkOpeningRowInjected } from './settings/LinkOpeningRow.tsx'
 import { PerformanceUsageRow, type PerformanceUsageRowInjected } from './settings/PerformanceUsageRow.tsx'
 import { PerformanceUsagePolicy } from './performance-usage.ts'
-import { useTurnDataValue } from './chat/use-turn-data.ts'
+import { useStepDataValue, useTurnDataValue } from './chat/use-turn-data.ts'
 import { bindDisclosure } from './chat/use-disclosure.ts'
 
 const CHAT_NODE_INJECT: ChatNodeInjected = {
   hooks: {
     turnData: (_standard, { turnData }) => function useTurnData(key) {
       return useTurnDataValue(turnData, key)
+    },
+    stepData: (_standard, { stepData }) => function useStepData(key) {
+      return useStepDataValue(stepData, key)
     },
     disclosure: (_standard, { disclosureReset }) => bindDisclosure(disclosureReset),
   },

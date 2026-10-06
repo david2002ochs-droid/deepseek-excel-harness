@@ -39,6 +39,8 @@ Standalone Markdown images show contained previews and open the shared image lig
 
 Settings → General → Open chat links in selects the destination for ordinary clicks on Chat HTTP(S) links: In-App Sidebar (default) opens a new right-Sidebar Browser tab, while Default Browser opens an external tab. The setting follows Keyboard shortcuts and is shown only while the Sidebar Browser is available. If the Sidebar Browser is not registered, both choices use the external browser; modified clicks retain native behavior. The `ui-chat.linkOpening` preference persists on loopback browsers and stays process-local when settings cannot persist writes. Sent file references and skills confirmed by the message’s logged invocation also open in the right Sidebar. File paths use the viewed Session; skill names resolve through its current input-trigger source. Both use the prose file-link dotted underline on hover or focus. Sessions, directories, and command labels remain non-navigating references.
 
+With the Conversation plugin's Excel context opt-in enabled, settled Assistant text citations such as `[[cite:Sheet1!A1:B2]]` become cell navigation controls. Chat reads only that response's `excelWorkbook` Step datum through the constrained `useStepData` hook, then requests a workbook-bound navigation owner. Quoted worksheet names support spaces, Unicode, and doubled apostrophes; malformed, external-workbook, inverted, and out-of-bounds addresses remain literal. Streaming, code fences, inline code, link contents, and user-authored citation tokens remain literal. Ordinary clients have no navigation owner. Parent navigation refusal, timeout, or busy state surfaces a localized composer notice.
+
 <a id="system-prompt-row"></a>
 ## Hidden Chat rows
 

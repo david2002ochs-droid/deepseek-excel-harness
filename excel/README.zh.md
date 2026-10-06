@@ -2,9 +2,9 @@
 
 [English](README.md) | 中文
 
-此 Windows Excel Desktop 入口嵌入原版 Harness Web UI。现有 `dsh web` profile 负责协调、设置和会话。包装层初始化 Office.js，并通过回环 HTTPS 代理显示该 UI，包括其 HTTP 和 WebSocket 传输。代理保留浏览器端的 Host，并按照[原版 Web 部署指南](../docs/user/guide/public-deployments.zh.md)的要求，为后端 cookie 添加 Secure。其 manifest（元数据清单）仅授予 `Restricted` 权限；此入口不添加工作簿工具。其 32 像素 manifest 图标由[原版 Harness 桌面图标](../apps/desktop/resources/icon.png)缩放生成。
+此 Windows Excel Desktop 入口嵌入原版 Harness Web UI。现有 `dsh web` profile 负责协调、设置和会话。包装层初始化 Office.js，并通过回环 HTTPS 代理显示该 UI，包括其 HTTP 和 WebSocket 传输。代理保留浏览器端的 Host，并按照[原版 Web 部署指南](../docs/user/guide/public-deployments.zh.md)的要求，为后端 cookie 添加 Secure。manifest 更新会提高版本号，以便 Office 刷新缓存的权限。其 manifest（元数据清单）请求 Microsoft 的 Excel 专用 API 所要求的 `ReadWriteDocument` 权限；包装层仅读取工作簿与选择范围的元数据，不添加工作簿执行工具。其 32 像素 manifest 图标由[原版 Harness 桌面图标](../apps/desktop/resources/icon.png)缩放生成。
 
-交付目标是完整的 Windows 安装包：安装过程负责前置依赖、受信任的 HTTPS 和加载项注册；用户直接从 Excel 打开 Harness，所需服务自动启动或连接。下述入口是过渡性的自动开发启动方式，并非该安装包。最终安装后的使用流程不得要求终端命令、复制 token 或开发者旁加载。
+交付目标是完整的 Windows 安装包：安装过程负责前置依赖、受信任的 HTTPS 和带版本的加载项注册更新；用户直接从 Excel 打开 Harness，所需服务自动启动或连接。下述入口是过渡性的自动开发启动方式，并非该安装包。最终安装后的使用流程不得要求终端命令、复制 token、开发者旁加载或用户清理缓存；验收包括原生工作簿上下文捕获。
 
 ## 启动
 
@@ -29,11 +29,21 @@ npm --prefix excel start
 
 包装层要求使用 localhost 根 URL，且仅包含一个非空 token 参数。它仅在 Host 为 `localhost:3443` 时提供携带凭据的任务窗格，并将 URL 传给嵌入的原版 UI，使 Harness 可以将启动 token 换成其签名会话 cookie。
 
-旁加载命令使用 [Microsoft Office 加载项调试工具](https://github.com/OfficeDev/Office-Addin-Scripts/tree/master/packages/office-addin-debugging)。未指定 `--document` 时，它会将 Microsoft 的任务窗格工作簿模板复制到系统临时目录中的新文件，并打开该一次性测试工作簿。请勿通过 `--document` 传入现有工作簿。如任务窗格关闭，请打开 **Home > Add-ins > Developer Add-ins > DeepSeek Harness (local)**。根据需要加宽窗格，以显示原版 Web UI。
+旁加载辅助程序使用 [Microsoft Office 加载项开发设置](https://github.com/OfficeDev/Office-Addin-Scripts/tree/master/packages/office-addin-dev-settings)的公开 API。它注册当前 manifest，禁用开发调试和实时重载，在独立临时目录中生成 Microsoft 的任务窗格工作簿模板，并在打开前为工作簿设置唯一文件名。重复启动会保留先前的测试工作簿，并保持现有 Excel 实例打开。生成的文件在打开后继续保留，打开失败时也保留。如开发过程中任务窗格关闭，请打开 **Home > Add-ins > Developer Add-ins > DeepSeek Harness (local)**。根据需要加宽窗格，以显示原版 Web UI。
 
-如果已在运行的 Excel 提示加载项不再可用，其开发注册可能尚未刷新。仅关闭新生成的一次性测试工作簿，不要保存，然后按 Win+R 并运行 `EXCEL.EXE /x "<generated workbook path>"`，将占位内容替换为 Excel 文件信息中显示的一次性工作簿路径。此操作只会在独立的 Excel 进程中重新打开该测试工作簿；请保持原有工作簿打开。
+Office 可能保留已打开任务窗格的 manifest 权限。修改注册或权限时，提高 manifest 版本并测试新的临时工作簿；关闭先前的测试工作簿时保留其修改。现有用户工作簿保持打开。注册和权限刷新由安装后的更新过程负责。
 
-运行 `npm --prefix excel test`，执行隔离的模拟子进程生命周期测试；测试不会启动 Harness、HTTPS 包装层或 Excel。这些测试不能作为原生任务窗格、身份验证、HTTP 或 WebSocket 验收通过的依据。运行 `npm --prefix excel run validate`，使用 Microsoft 验证器检查 manifest。
+运行 `npm --prefix excel test`，执行隔离的模拟子进程生命周期、只读元数据桥接，以及替换注册和打开操作的真实 Office 工作簿生成测试；测试不会启动 Harness、HTTPS 包装层或 Excel。这些测试不能作为原生任务窗格、身份验证、HTTP 或 WebSocket 验收通过的依据。运行 `npm --prefix excel run validate`，使用 Microsoft 验证器检查 manifest。
+
+## 工作簿上下文
+
+Excel 启动通过 `context.patch.yml`，让现有会话插件显式启用父框架桥接。Host 在浏览器插件启动前注入公开的 origin 与超时；该启动值不含凭据或工作簿数据。部署配置变更后需重新加载任务窗格。每条普通提交的消息在异步附件准备之前请求新的 Office 元数据读取。第一条消息在首个模型请求之前提供工作簿定位信息；后续消息携带各自捕获的选择范围。捕获内容包括窗格绑定的工作簿标识符、通过 ExcelApi 1.7 获取的工作簿名称（旧主机使用文件定位信息的末段），以及可用时不含凭据的文件定位信息、活动工作表标识符及名称、带工作表名称的选择地址（受支持主机上的多个区域），以及观察时间。JSON 最多为 2048 个 UTF-8 字节。不收集单元格值、公式、VBA 源码、完整工作表清单或工具目录。
+
+元数据保留在普通用户消息日志及其模型投影中。聊天和排队消息将捕获的选择范围显示为小型引用标签。精确的来源、父子窗口校验及每次提交的请求标识符关联桥接通信。元数据不可用、超时或过大时，Excel 提交被阻止且草稿保留；选择目标不会被截断。独立 Web 会话不依赖此桥接。
+
+助手正文保留原有的单元格引用语法，例如 `[[cite:'Revenue 2027'!B4:D8]]`。在绑定的 Excel 窗格中，有效引用会选择对应工作表和区域。导航验证原消息的窗格标识符及带工作表名称、有界的 A1 地址，拒绝外部工作簿引用和可执行文本。无效标记、代码示例以及没有匹配工作簿上下文的引用保持为普通文本。点击引用会改变活动工作表及选择范围，但不会写入单元格。引用记号本身不证明智能体读取或修改了这些单元格。
+
+标识符仅属于当前任务窗格绑定，不是原生 COM 工作簿句柄。重新加载窗格或 Office 报告不同文档位置时（包括另存为），标识符会改变；导航在选择之前再次检查位置。Office 可能无法为尚未保存的工作簿提供文件定位信息，此时绑定依赖 Office 将窗格保持在原文档中。第二个重叠的捕获或导航立即失败并保留草稿，不读取后来的选择。此上下文既不建立 COM 连接，也不安装 Excel/VBA CLI；后续 COM 操作必须解析并验证捕获的目标，包括观察后发生的变化。工作簿身份与选择范围的概念参考现有 `vba-excel-cre-auditor` 集成，但不导入其大型准备扫描或运行时。
 
 ## 停止与限制
 

@@ -1,4 +1,4 @@
-/** Loopback HTTPS entry for the Office wrapper and the unchanged dsh Web profile. */
+/** Loopback HTTPS entry for the Office metadata wrapper and the dsh Web profile. */
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:https'
 import { homedir } from 'node:os'
@@ -20,6 +20,7 @@ if (harnessUrl.origin !== 'https://localhost:3443' || harnessUrl.pathname !== '/
 const taskpane = readFileSync(new URL('./taskpane.html', import.meta.url), 'utf8')
   .replace('__EXCEL_HARNESS_URL__', JSON.stringify(harnessUrl.href).replaceAll('<', '\\u003c'))
 const icon = readFileSync(new URL('./icon.png', import.meta.url))
+const contextModule = readFileSync(new URL('./context.mjs', import.meta.url))
 const proxy = httpProxy.createProxyServer({ target: 'http://127.0.0.1:3080', ws: true, changeOrigin: false })
 
 proxy.on('proxyRes', (proxyResponse) => {
@@ -56,6 +57,11 @@ const server = createServer({
   if (pathname === '/excel/icon.png') {
     response.writeHead(200, { 'content-type': 'image/png' })
     response.end(icon)
+    return
+  }
+  if (pathname === '/excel/context.mjs') {
+    response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' })
+    response.end(contextModule)
     return
   }
   proxy.web(request, response)

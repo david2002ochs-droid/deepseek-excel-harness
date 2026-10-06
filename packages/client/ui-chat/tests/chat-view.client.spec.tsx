@@ -10,7 +10,7 @@ import type {
   AssistantMessageNode, ChatNode, ChatNodeHookContext, ChatNodeOwnerProps, ChatSnapshot,
   ChatViewSlotProps, CommandNode, CompactionSummaryNode, ContextMessageNode, ConversationNode,
   LegacyConversationSlice, ModelRetryNode, StartedToolCall, SteeringMessageNode,
-  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnMaxTokensNode, UseChatNodeTurnData,
+  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnMaxTokensNode, UseChatNodeTurnData, UseChatNodeStepData,
   TranscriptViewMode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {
@@ -34,7 +34,7 @@ import { createChatStore } from '../src/client/stores.ts'
 import { derivePresentationPolicy } from '../src/client/presentation-policy.ts'
 import { ChatView } from '../src/client/chat/ChatView.tsx'
 import { ChatNodeSeat } from '../src/client/chat/ChatNodeSeat.tsx'
-import { useTurnDataValue } from '../src/client/chat/use-turn-data.ts'
+import { useStepDataValue, useTurnDataValue } from '../src/client/chat/use-turn-data.ts'
 import { bindDisclosure } from '../src/client/chat/use-disclosure.ts'
 import { en, zh } from '../src/client/locale.ts'
 import { AssistantNodeView } from '../src/client/chat/AssistantNodeView.tsx'
@@ -330,10 +330,11 @@ function makeHarness(
     if (nodeSlotOverride !== undefined) return nodeSlotOverride(key as never, owner as never, opts as never)
     if (key !== 'conversation.chat.node') return opts?.fallback ?? null
     const nodeOwner = owner as RoutedChatNodeOwner
-    const { turnData, disclosureReset } = opts?.hookContext as ChatNodeHookContext
+    const { turnData, stepData, disclosureReset } = opts?.hookContext as ChatNodeHookContext
     const useTurnData: UseChatNodeTurnData = dataKey => useTurnDataValue(turnData, dataKey)
+    const useStepData: UseChatNodeStepData = dataKey => useStepDataValue(stepData, dataKey)
     const useDisclosure = bindDisclosure(disclosureReset)
-    const nodeProps = { ...props, ...nodeOwner, useTurnData, useDisclosure, __renders: undefined }
+    const nodeProps = { ...props, ...nodeOwner, useTurnData, useStepData, useDisclosure, __renders: undefined }
     switch (nodeOwner.node.kind) {
       case 'user':
         return <UserMessageNodeView {...nodeProps} node={nodeOwner.node} />
@@ -342,7 +343,8 @@ function makeHarness(
       case 'context':
         return <ContextMessageNodeView {...nodeProps} node={nodeOwner.node} />
       case 'assistant-step':
-        return <AssistantNodeView {...nodeProps} node={nodeOwner.node} usePresentation={props.usePresentation} />
+        return <AssistantNodeView {...nodeProps} node={nodeOwner.node}
+          usePresentation={props.usePresentation} cellCitations={() => undefined} />
       case 'command':
         return (
           <CommandNodeView

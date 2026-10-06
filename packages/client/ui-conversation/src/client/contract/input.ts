@@ -132,6 +132,19 @@ export interface InputTriggerController {
 declare module '@deepseek-ai/cordis' {
   interface Events {
     /**
+     * Capture model-facing context synchronously at one composer gesture.
+     * The returned text joins the same durable user message after capture.
+     * @param signal - lifetime of this submission, including scope disposal.
+     * @mode bail
+     */
+    'conversation/message-context'(signal: AbortSignal): Promise<string> | undefined
+    /**
+     * Resolve navigation for a workbook binding projected from logged input.
+     * @param workbookId - immutable originating user message's workbook identity.
+     * @mode bail
+     */
+    'conversation/excel-citations'(this: Context, workbookId: string): { open(address: string): void } | undefined
+    /**
      * Claim a command token for the scoped input machine.
      * @param request - command claim and span.
      * @mode bail
@@ -352,3 +365,9 @@ export type InputEffect =
    * sends have no draft to retain).
    */
   | { readonly type: 'commit-draft'; readonly retainSuffixOf: string | null }
+declare module './conversation.ts' {
+  interface ConversationStepDataMap {
+    /** Workbook bound to the latest human input before this step's first Assistant output. */
+    excelWorkbook: { readonly workbookId: string | undefined }
+  }
+}

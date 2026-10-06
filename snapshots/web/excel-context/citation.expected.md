@@ -1,0 +1,4 @@
+- paragraph:
+  - text: The selected range is
+  - button "Sheet1!A1:B2"
+  - text: .

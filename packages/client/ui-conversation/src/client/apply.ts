@@ -29,6 +29,9 @@ import type { IConversation } from './service.ts'
 import { ComposerBlockRegistry } from './input/blocks.ts'
 import type { ComposerBlock } from './contract/composer-blocks.ts'
 import { InputHub } from './input/hub.ts'
+import { captureExcelContext, navigateExcelReference, type ExcelContextConfig } from './input/excel-context.ts'
+import { EXCEL_CONTEXT_BOOT_KEY, ExcelContextConfigSchema, resolveExcelContextConfig } from '../excel-config.ts'
+import { registerExcelBindings } from './input/excel-bindings.ts'
 import { ComposerSubmissionPolicy } from './input/submission-policy.ts'
 import { queueDockEntry } from './queue/QueueDock.tsx'
 import { EnterBehaviorRow } from './settings/EnterBehaviorRow.tsx'
@@ -61,11 +64,14 @@ export const inject = [
 export interface Config {
   /** Maximum generic-file uploads allowed to run concurrently in browser Workers. */
   maxConcurrentFileUploads?: number
+  /** Opt-in workbook/selection capture from a trusted Excel embedding parent. */
+  excelContext?: ExcelContextConfig | undefined
 }
 
 /** Validated Conversation runtime configuration. */
 export const Config: z<Config> = z.object({
   maxConcurrentFileUploads: z.natural().min(1).default(2),
+  excelContext: z.union([z.const(undefined), ExcelContextConfigSchema]),
 })
 
 // Stable no-session sources keep the renderer's observable-hook cache and
@@ -159,6 +165,45 @@ export function apply(ctx: Context, config: Config = Config({})): void {
 
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-conversation: dictionaries')
   const t = ctx.locale.bind(NS)
+  const excelContext = resolveExcelContextConfig(config.excelContext ?? Reflect.get(globalThis, EXCEL_CONTEXT_BOOT_KEY))
+  if (excelContext !== undefined) {
+    const captures = new Set<Promise<string>>()
+    registerExcelBindings(ctx, uiConversation)
+    const navigation = new Set<AbortController>()
+    const lifetime = new AbortController()
+    ctx.effect(() => () => {
+      lifetime.abort()
+      for (const controller of navigation) controller.abort()
+    })
+    ctx.on('conversation/message-context', (signal) => {
+      const capture = captureExcelContext(excelContext, AbortSignal.any([signal, lifetime.signal]), t('input.excelContextUnavailable'))
+      if (capture !== undefined) {
+        captures.add(capture)
+        void capture.then(() => captures.delete(capture), () => captures.delete(capture))
+      }
+      return capture
+    })
+    ctx.on('conversation/excel-citations', function (workbookId) {
+      if (window.parent === window) return undefined
+      const session = ctx.sessions.sessionOf(this)
+      if (session === undefined) return undefined
+      return { open: (address) => {
+        if (captures.size > 0 || navigation.size > 0 || session.getSnapshot().running) {
+          inputHub.shell(session.sessionId).notify('info', t('input.excelNavigationBusy'))
+          return
+        }
+        const controller = new AbortController()
+        navigation.add(controller)
+        void navigateExcelReference(excelContext, workbookId, address, controller.signal).then(
+          () => navigation.delete(controller),
+          () => {
+            navigation.delete(controller)
+            if (!controller.signal.aborted) inputHub.shell(session.sessionId).notify('error', t('input.excelNavigationUnavailable'))
+          },
+        )
+      } }
+    })
+  }
   const conversationStore = createConversationStore()
   const submissionPolicy = new ComposerSubmissionPolicy(
     ctx.configForms.get<ConversationSettings>(CONVERSATION_SETTINGS_NAMESPACE),

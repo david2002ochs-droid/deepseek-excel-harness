@@ -150,16 +150,34 @@ The selector must be a pure function of the owner currency. Its non-null return 
 
 `InputActions.captureInsertion()` captures the draft selection and revision; `insertText(text, span)` inserts one undoable plain-text edit only while that revision is current and the editor permits editing. Asynchronous consumers retain rejected results for user action.
 
+`conversation/message-context` is a scoped bail event called synchronously at an ordinary message's submission gesture, before reference serialization or slash arbitration. A contributor returns a capture promise; its text joins that same durable user message. Capture failure restores the draft and blocks admission. `excelContext: { parentOrigin, timeoutMs }` opts into a trusted Excel parent bridge. Host configuration reaches the browser through a public `webserver/index-inject` global before plugins start; browser entry configuration does not inherit Host configuration. Deployment changes require a page reload. The first and subsequent messages carry only workbook binding, active worksheet, capture time, and exact sheet-qualified selection references; context JSON is capped at 2,048 UTF-8 bytes. The bridge validates parent origin, window source, request identity, and payload shape. Standalone documents remain unchanged. Chat bubbles and queue previews fold the logged context into a selection chip; log exports and model history retain the full text.
+
+The opt-in plugin accumulates each human input's workbook binding in a Conversation Context and publishes `excelWorkbook` Step data at the first Assistant output boundary. Subsequent steering cannot change an existing response's binding; the next Step uses its own latest input, and uncaptured inputs carry no navigation authority. Replay and history expansion reconstruct the same binding. `conversation/excel-citations(workbookId)` supplies the scoped navigation owner consumed by Chat. Navigation is blocked during captures, another navigation, or a running Session; refusal and timeout surface localized composer notices.
+
 `conversation.input.activity` hosts one control between the model selector and Send. Its `onActiveChange` callback expands that control across the toolbar and hides ordinary accessory controls and the context meter while preserving the editor and submit action. Closing the activity restores those controls with context details closed. The empty hero dock remains collapsed when it has no content. The occupant releases expansion on unmount and owns any activity-specific feedback.
 
 <a id="model-experience"></a>
 ## Model Experience
 
-None, as this package renders browser state and sends user-admitted inputs through Session Controller APIs without constructing model requests.
+### Captured Excel input context
+
+#### What the model sees
+
+With `excelContext` enabled in an embedded document, the ordinary `user/message` text ends with `[Excel context]`, one JSON line containing `workbook.id`, optional `workbook.name` and `workbook.path`, `worksheet.id` and `worksheet.name`, `selection.workbookId` and `selection.address`, and `observedAt`, then the fixed instruction below and `[/Excel context]`. The metadata describes the workbook and selection captured for that submission. It contains no workbook values, formulas, VBA, or capability catalog. The same text survives Session replay, log export, and ordinary model-history projection.
+
+##### Citation instruction
+
+```markdown
+Cite Excel cells as [[cite:Sheet1!A1:B2]] (quote worksheet names with spaces).
+```
+
+#### Token effect
+
+Each ordinary message adds at most 2,048 UTF-8 bytes of context JSON plus the fixed wrapper and citation instruction. The first message supplies initial workbook binding without an additional turn. Disabled and standalone clients add no context. Context remains in ordinary history until a consumer compacts or replaces it.
 
 #### KV Cache effect
 
-None; Conversation assembly and browser input state do not alter provider-side prompt caching.
+Each captured selection appends user-message text; it does not replace the system prompt or earlier history.
 
 ## Known Limitations and Deferred Work
 
@@ -167,6 +185,7 @@ None; Conversation assembly and browser input state do not alter provider-side p
 
 - **Only registered targets can render** — the shell deliberately has no implicit fallback target beyond the registered `chat` preference.
 - **Factory occurrences inherit their render-position Session** — `conversation.content` does not accept an independently addressed Session; that requires a separate Session-provider capability.
+- **Command claims use their own input contract** — captured composer context joins ordinary messages and unresolved slash input, not `/goal` or `/plan` command arguments.
 
 
 <a id="dev-note"></a>

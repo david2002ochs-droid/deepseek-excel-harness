@@ -3,6 +3,7 @@ import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
 import type { PerformanceUsageMode } from '../../chat-settings.ts'
 import type { ChatPresentationPolicy } from '../presentation-policy.ts'
 import { NS } from '../locale.ts'
+import type { CellCitationsInjected } from '../contract/slots.ts'
 import { AssistantNodeView } from './AssistantNodeView.tsx'
 import { CommandNodeView, ManualCompactionNodeView } from './CommandNodeView.tsx'
 import {
@@ -41,7 +42,10 @@ export function registerChatNodeRenderers(
     name: 'conversation.chat.node',
     key: 'assistant-step',
     locale: NS,
-    inject: () => ({ hooks: { presentation } }),
+    inject: (sessionId): CellCitationsInjected => ({ hooks: { presentation }, cellCitations: (workbookId) => {
+      const scope = ctx.sessions.scope(sessionId)
+      return scope?.bail(scope, 'conversation/excel-citations', workbookId)
+    } }),
   }, AssistantNodeView))
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
     name: 'conversation.chat.node',

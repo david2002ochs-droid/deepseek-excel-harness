@@ -998,7 +998,7 @@ export class ConversationNodeAssembler implements ConversationViewSnapshotStore 
     if (!Number.isSafeInteger(data.turn) || data.turn < 0) {
       throw new Error(`conversation Definition "${context.kind}" published invalid turn ${data.turn}`)
     }
-    if (data.kind === 'step' && (!Number.isSafeInteger(data.step) || (data.step as number) < 0)) {
+    if (data.kind === 'step' && (!Number.isSafeInteger(data.step) || data.step < 0)) {
       throw new Error(`conversation Definition "${context.kind}" published invalid step ${String(data.step)}`)
     }
     return data
