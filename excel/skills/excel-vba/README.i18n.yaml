@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write excel/skills/excel-vba/README.md
+/:
+  en: f68a42c04fc1e27f
+  zh: 6b40bd654ef86194
+/excel-vba-helper-reference:
+  en: 87fb42b2f3c5584a
+  zh: 6a41d9fcdc18a094
+/excel-vba-helper-reference/summary:
+  en: 5efb7c02289dbc98
+  zh: afdc6481cb918d1f
+/excel-vba-helper-reference/research-guidance:
+  en: ead456e221d18279
+  zh: d15ea88621a6bd07
+/excel-vba-helper-reference/requests-and-source-ownership:
+  en: 66eb69821be7934e
+  zh: e7cf084d6906a482
+/excel-vba-helper-reference/limits-and-verification:
+  en: 167879469048b60f
+  zh: 88a0f260ee3d1c8d
+/excel-vba-helper-reference/dev-note:
+  en: b75c8458928b72b9
+  zh: 45e76642489dcc3c
