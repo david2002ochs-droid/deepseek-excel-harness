@@ -33,7 +33,15 @@ npm --prefix excel start
 
 Office 可能保留已打开任务窗格的 manifest 权限。修改注册或权限时，提高 manifest 版本并测试新的临时工作簿；关闭先前的测试工作簿时保留其修改。现有用户工作簿保持打开。注册和权限刷新由安装后的更新过程负责。
 
-运行 `npm --prefix excel test`，执行隔离的模拟子进程生命周期、只读元数据桥接，以及替换注册和打开操作的真实 Office 工作簿生成测试；测试不会启动 Harness、HTTPS 包装层或 Excel。这些测试不能作为原生任务窗格、身份验证、HTTP 或 WebSocket 验收通过的依据。运行 `npm --prefix excel run validate`，使用 Microsoft 验证器检查 manifest。
+运行 `npm --prefix excel test`，执行隔离的模拟子进程生命周期、只读元数据桥接，以及替换注册和打开操作的真实 Office 工作簿生成测试；测试不会启动 Harness、HTTPS 包装层或 Excel。运行时准备、工作簿绑定和准备测试覆盖受保护助手及私有主目录准备。脚本化适配器通过生产环境的 skill 目录、加载器、固定的工具输出日志及会话重放进行验证，不请求模型或网络；默认上游包为单元测试夹具。将 `EXCEL_SKILL_TEST_HOME` 设置为单独准备的主目录，可验证真实上游指令和资源。这些测试不能作为原生任务窗格、身份验证、HTTP 或 WebSocket 验收通过的依据。运行 `npm --prefix excel run validate`，使用 Microsoft 验证器检查 manifest。
+
+## Excel VBA 准备
+
+启动服务前，启动器在 `<home>/runtime/xlflow-0.35.0` 中准备 xlflow 0.35.0 及其配套 .NET 桥接程序，验证固定发布文件的哈希，并在 `<home>/skills` 中安装完整上游 skill 以及 [Excel VBA skill 和受保护助手](skills/excel-vba/README.zh.md)。后端 PATH 首项为已验证的运行时目录；受保护助手自行解析私有可执行文件的精确位置。`<home>/AGENTS.md` 中的一段托管指令将窗格 VBA 任务先路由到 `excel-vba`，再使用 `xlflow`。准备过程保留模型路由、安全设置、无关环境变量以及现有用户指令和 skill。
+
+`npm --prefix excel run setup` 执行相同准备过程，不启动服务器或 Excel；`-- --home <absolute external directory>` 可选择一次性主目录。同一主目录的文件系统锁串行化并发准备操作。主目录驱动器根路径不可用时，准备过程在写入前报错；验证过程在文件系统查询之间检查取消信号。整个准备过程（包括等锁）限定为两分钟。取消时等待自有准备子进程终止，并阻止服务启动。如果所属进程被强制终止，请在确认没有准备操作运行后，仅移除遗留的 `<home>/.excel-setup.lock` 目录。重复准备保留托管 skill 的自定义内容；未托管目录冲突、已编辑的托管指令段及缺失或改变的运行时资源均须显式修复，准备过程报错且不替换原内容。
+
+常规 Windows shell 策略可运行固定版本的版本查询，但可能拒绝原生清单枚举、COM 或私有主目录写入。发生实际拒绝后，请遵循助手文档中的单次调用提权指引；准备过程不会禁用隔离。原生宏、按钮和窗体验收需要一次性的启用宏原工作簿，且现有 VBIDE 信任须已允许访问。主机 COM 执行成功不能作为产品沙箱内执行、付费 agent 运行或安装包完成的依据。
 
 ## 工作簿上下文
 

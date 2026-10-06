@@ -1,9 +1,10 @@
 /** One-command development launch; no installer or login integration. */
-import { access, mkdir, realpath } from 'node:fs/promises'
+import { access, mkdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { launch, requireFreePort } from './launch.mjs'
+import { runtimeEnvironment, setupExcelHome, validateExcelHome } from './setup.mjs'
 
 const directory = dirname(fileURLToPath(import.meta.url))
 const root = dirname(directory)
@@ -19,22 +20,10 @@ try {
   if (!process.env.EXCEL_DSH_HOME && !process.env.LOCALAPPDATA) {
     throw new Error('LOCALAPPDATA is unavailable. Set EXCEL_DSH_HOME to a directory outside the checkout.')
   }
-  const home = resolve(process.env.EXCEL_DSH_HOME ?? join(process.env.LOCALAPPDATA, 'DeepSeekHarnessExcel', 'Harness'))
-  const checkout = await realpath(root)
-  let ancestor = home
-  while (true) {
-    try { ancestor = await realpath(ancestor); break } catch (error) {
-      if (error.code !== 'ENOENT') throw error
-      ancestor = dirname(ancestor)
-    }
-  }
-  const isInside = path => {
-    const location = relative(checkout, path)
-    return !isAbsolute(location) && location !== '..' && !location.startsWith('..\\') && !location.startsWith('../')
-  }
-  if (isInside(home) || isInside(ancestor)) {
-    throw new Error('EXCEL_DSH_HOME must be outside the checkout.')
-  }
+  const home = await validateExcelHome(
+    resolve(process.env.EXCEL_DSH_HOME ?? join(process.env.LOCALAPPDATA, 'DeepSeekHarnessExcel', 'Harness')),
+    AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]),
+  )
   await mkdir(home, { recursive: true, mode: 0o700 })
   const certificates = process.env.EXCEL_TLS_DIRECTORY ?? join(homedir(), '.office-addin-dev-certs')
   try {
@@ -45,6 +34,8 @@ try {
   }
   await requireFreePort(3080)
   await requireFreePort(3443)
+  const runtime = await setupExcelHome(home, { signal: controller.signal })
+  controller.signal.throwIfAborted()
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     !/KEY|SECRET|TOKEN|PASSWORD/iu.test(key) && !/^EXCEL_HARNESS_URL$/iu.test(key)))
   env.DSH_HOME = home
@@ -54,7 +45,7 @@ try {
     backend: { command: process.execPath, args: ['--import', 'tsx/esm', 'apps/cli/src/bin.ts', '--profile', 'web', '--patch', join(directory, 'context.patch.yml'), '--no-open', '--host', '127.0.0.1', '--port', '3080', '--public-url', 'https://localhost:3443', '--trusted-host', 'localhost:3443'], cwd: root },
     wrapper: { command: process.execPath, args: [join(directory, 'serve.mjs')], cwd: directory },
     sideload: { command: process.execPath, args: [join(directory, 'sideload.mjs')], cwd: directory },
-    env, signal: controller.signal, timeoutMs: 120000,
+    env: runtimeEnvironment(env, runtime), signal: controller.signal, timeoutMs: 120000,
     report: message => console.log(message),
   })
 } catch (error) {

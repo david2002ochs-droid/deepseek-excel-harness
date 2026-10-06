@@ -6,7 +6,8 @@
   "scripts": {
     "certs": "npx --yes office-addin-dev-certs@3.0.1 install",
     "start": "node start.mjs",
-    "test": "node --test launch.test.mjs context.test.mjs sideload.test.mjs",
+    "setup": "node setup.mjs",
+    "test": "node --import tsx/esm --test launch.test.mjs context.test.mjs sideload.test.mjs xlflow-runtime.test.mjs workbook-binding.test.mjs setup.test.mjs skill-loading.test.mjs",
     "sideload": "node sideload.mjs",
     "stop": "npx --yes office-addin-debugging@7.0.1 stop manifest.xml",
     "validate": "npx --yes office-addin-manifest@3.0.1 validate manifest.xml"
