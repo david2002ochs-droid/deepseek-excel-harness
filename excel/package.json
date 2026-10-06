@@ -1,0 +1,16 @@
+{
+  "name": "dsh-excel-taskpane-local",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "certs": "npx --yes office-addin-dev-certs@3.0.1 install",
+    "start": "node serve.mjs",
+    "sideload": "npx --yes office-addin-debugging@7.0.1 start manifest.xml desktop --app excel --no-debug --no-live-reload --dev-server-port 3443",
+    "stop": "npx --yes office-addin-debugging@7.0.1 stop manifest.xml",
+    "validate": "npx --yes office-addin-manifest@3.0.1 validate manifest.xml"
+  },
+  "dependencies": {
+    "http-proxy": "1.18.1"
+  }
+}
