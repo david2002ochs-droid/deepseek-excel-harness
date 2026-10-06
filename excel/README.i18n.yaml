@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write excel/README.md
 /local-excel-taskpane:
-  en: 93de61df5cbdb6de
-  zh: 47b421b560deb4e5
+  en: 8c324dcb9b669015
+  zh: e17dcf299adbf0fc
 /local-excel-taskpane/start:
-  en: da6e3e48f9931da2
-  zh: a36311bf9f864042
+  en: e134ec4870c77a80
+  zh: 1268739ad90a81a2
 /local-excel-taskpane/stop-and-limits:
-  en: c1ed9096ae47f6e5
-  zh: e34ebc392a9a864c
+  en: fd71266298abb670
+  zh: 4e4e77ed46ff3880
