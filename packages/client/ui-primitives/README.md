@@ -33,6 +33,10 @@ This package is a Web-shell build input. Its static ESM retains third-party impo
 
 Compose feature UI from these atoms whenever the web client needs a standard control or an agent-output renderer. They render through React only and take `--dsw-*` design tokens from the theme, so they fit any plugin without importing the theme or the slot system.
 
+`projectUserText` folds a validated, bounded `[Excel context]` record into an inline chip showing its sheet-qualified selection address. This is a display projection: durable user text, exports, and provider history retain the complete workbook binding and captured selection. Invalid or oversized records remain ordinary text.
+
+`MarkdownText.cellCitations` is an optional owner-scoped navigation callback for settled Assistant text. Valid `[[cite:Sheet1!A1:B2]]` tokens become buttons only outside code and link nodes; quoted worksheet names and absolute A1 references are supported. External, malformed, inverted, and out-of-bounds addresses remain text. Streaming and callers without the callback preserve literal tokens. The owner supplies the response's workbook binding, operation lifetime, and localized failures.
+
 <a id="component-catalog"></a>
 ### Component catalog
 

@@ -19,6 +19,7 @@ import clsx from 'clsx'
 import { ReferenceIconRegular } from './ReferenceIcon.tsx'
 import css from './user-text.module.css'
 import markdownCss from './markdown/MarkdownText.module.css'
+import { excelContextLabel } from './excel-context-label.ts'
 
 /** The wire form a session chip serializes to; label is the display text. */
 const SESSION_WIRE_RE = /@\[([^\]\n]+)\]\(dsh-session:[^)\s]+\)/gu
@@ -31,7 +32,7 @@ interface DecorationRange {
   readonly end: number
   /** Matched source text (hover title). */
   readonly label: string
-  readonly kind: 'session' | 'plain'
+  readonly kind: 'session' | 'excel' | 'plain'
   /** Pre-resolved display text (wire folds); derived from label when absent. */
   readonly display?: string
 }
@@ -63,6 +64,14 @@ export function projectUserText(
   references?: UserTextReferences,
 ): ReactNode {
   const ranges: DecorationRange[] = []
+  const excel = new RegExp(/\[Excel context\]\n([^\n]*)\n/.source
+    + /Cite Excel cells as \[\[cite:Sheet1!A1:B2\]\] \(quote worksheet names with spaces\)\./.source
+    + /\n\[\/Excel context\]/.source, 'gu')
+  for (const match of text.matchAll(excel)) {
+    const display = excelContextLabel(match[1] ?? '')
+    if (display === undefined) continue
+    ranges.push({ start: match.index, end: match.index + match[0].length, label: match[0], kind: 'excel', display })
+  }
   SESSION_WIRE_RE.lastIndex = 0
   let wire: RegExpExecArray | null
   while ((wire = SESSION_WIRE_RE.exec(text)) !== null) {
@@ -96,7 +105,7 @@ export function projectUserText(
     if (label.startsWith('/') && !slashNames.includes(label.slice(1))) continue
     ranges.push({ start: tokenStart, end: tokenStart + label.length, label, kind: 'plain' })
   }
-  const rankOf = (range: DecorationRange): number => range.kind === 'session' ? 0 : 1
+  const rankOf = (range: DecorationRange): number => range.kind === 'plain' ? 1 : 0
   ranges.sort((a, b) => a.start - b.start || rankOf(a) - rankOf(b) || b.end - a.end)
   const parts: ReactNode[] = []
   let cursor = 0
@@ -107,6 +116,14 @@ export function projectUserText(
     if (range.start < cursor) continue
     const { start: tokenStart, end, label, kind } = range
     if (tokenStart > cursor) pushPlain(cursor, tokenStart)
+    if (kind === 'excel') {
+      parts.push(<span key={tokenStart} className={css.refChip} data-ref-chip="excel" title={range.display}>
+        <ReferenceIconRegular kind="file" size={16} className={css.refIcon} />
+        {range.display}
+      </span>)
+      cursor = end
+      continue
+    }
     const referenceKind = kind === 'session'
       ? 'session'
       : label.startsWith('@')

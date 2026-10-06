@@ -6,13 +6,13 @@ import {
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { createSnapshotStore, type ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { apply, inject, type ViewTab } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import { apply, inject, type ConversationConfig, type ViewTab } from '@deepseek-ai/dsh-client-ui-conversation/client'
 
 usePinnedBrowserLanguages('zh-CN')
 
 const SID = 'session-1' as SessionId
 
-async function bench(options: { declareConversation?: boolean } = {}) {
+async function bench(options: { declareConversation?: boolean; config?: ConversationConfig } = {}) {
   const runtime = await SlotTestRuntime.create()
   const developerTools = createSnapshotStore(true)
   runtime.ctx.provide('uiWorkspace', {
@@ -31,7 +31,7 @@ async function bench(options: { declareConversation?: boolean } = {}) {
       'settings.general.item': { kind: 'list', scope: 'root' },
     }, (_props: { renderSlot?: unknown }) => null)
   }
-  const feature = await runtime.mount({ inject: [...inject], apply })
+  const feature = await runtime.mount({ inject: [...inject], apply: (ctx) => { apply(ctx, options.config) } })
   if (options.declareConversation !== false) runtime.renderRoot()
   return { runtime, feature, developerTools }
 }
@@ -44,6 +44,35 @@ function entry(
 }
 
 describe('target-neutral Conversation apply wiring', () => {
+  it('registers the opt-in scoped Excel capture and removes it with the plugin fiber', async () => {
+    const postMessage = vi.fn<(message: { requestId: string }, origin: string) => void>()
+    const parent = { postMessage } as unknown as Window
+    const parentGetter = vi.spyOn(window, 'parent', 'get').mockReturnValue(parent)
+    const b = await bench({ config: { maxConcurrentFileUploads: 2,
+      excelContext: { parentOrigin: 'https://localhost:3443', timeoutMs: 1000 } } })
+    try {
+      await b.runtime.sessions.add({ id: SID })
+      using _reference = b.runtime.sessions.retain(SID)
+      const actx = b.runtime.ctx.sessions.scope(SID)!
+      const capture = actx.bail(actx, 'conversation/message-context', new AbortController().signal)
+      expect(postMessage).toHaveBeenCalledOnce()
+      const context = { workbook: { id: 'book-1' }, worksheet: { id: 'sheet-1', name: 'Sheet1' },
+        selection: { workbookId: 'book-1', address: 'Sheet1!A1' }, observedAt: '2026-10-06T12:00:00.000Z' }
+      window.dispatchEvent(new MessageEvent('message', { origin: 'https://localhost:3443', source: parent,
+        data: { type: 'dsh/excel-context/response', version: 1, requestId: postMessage.mock.calls[0]?.[0].requestId, context } }))
+      expect(await capture).toContain('Sheet1!A1')
+      const remove = vi.spyOn(window, 'removeEventListener')
+      const submission = new AbortController()
+      const pending = actx.bail(actx, 'conversation/message-context', submission.signal)
+      const rejected = expect(pending).rejects.toThrow()
+      await b.feature.dispose()
+      await rejected
+      expect(submission.signal.aborted).toBe(false)
+      expect(remove).toHaveBeenCalledWith('message', expect.any(Function))
+      remove.mockRestore()
+      expect(actx.bail(actx, 'conversation/message-context', new AbortController().signal)).toBeUndefined()
+    } finally { await b.runtime.dispose(); parentGetter.mockRestore() }
+  })
   it('hides only the Trajectory View while developer tools are disabled and restores it when enabled', async () => {
     const b = await bench()
     const header = b.runtime.slots.entries('conversation.session.header')[0]!

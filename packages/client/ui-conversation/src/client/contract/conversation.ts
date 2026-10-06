@@ -70,9 +70,12 @@ type RegisteredStepData<DataMap extends object> = {
 }[Extract<keyof DataMap, string>]
 
 type ConversationLocationDataOf<TurnData extends object, StepData extends object> =
-  [keyof TurnData | keyof StepData] extends [never]
-    ? ConversationLocationDataValue
-    : RegisteredTurnData<TurnData> | RegisteredStepData<StepData>
+  | ([keyof TurnData] extends [never]
+    ? ConversationLocationDataValue & { readonly kind: 'turn' }
+    : RegisteredTurnData<TurnData>)
+  | ([keyof StepData] extends [never]
+    ? ConversationLocationDataValue & { readonly kind: 'step' }
+    : RegisteredStepData<StepData>)
 
 /** One Definition-owned value attached to an Engine-owned Turn or Step. */
 export type ConversationLocationData = ConversationLocationDataOf<

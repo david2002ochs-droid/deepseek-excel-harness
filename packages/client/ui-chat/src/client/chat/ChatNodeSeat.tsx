@@ -114,7 +114,8 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
   const wrapperRef = useSearchableHidden(processHidden, revealProcess)
   const [disclosureReset] = useState(() => createSnapshotStore(0))
   const turnData = turnDataOf(routedNode)
-  const hookContext = useMemo<ChatNodeHookContext>(() => ({ turnData, disclosureReset }), [turnData, disclosureReset])
+  const stepData = routedNode?.location.kind === 'step' ? routedNode.location.step.data : undefined
+  const hookContext = useMemo<ChatNodeHookContext>(() => ({ turnData, stepData, disclosureReset }), [turnData, stepData, disclosureReset])
   useEffect(() => {
     if (processMember && processHidden && wrapperRef.current?.hasAttribute('hidden')) {
       disclosureReset.set(disclosureReset.getSnapshot() + 1)

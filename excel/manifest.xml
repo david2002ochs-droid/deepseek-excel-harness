@@ -3,7 +3,7 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:type="TaskPaneApp">
   <Id>c49015d3-b04d-4a74-bb16-27d2c44ea975</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.0.0.1</Version>
   <ProviderName>DeepSeek Harness Excel local fork</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="DeepSeek Harness (local)" />
@@ -16,5 +16,5 @@
   <DefaultSettings>
     <SourceLocation DefaultValue="https://localhost:3443/excel/taskpane.html" />
   </DefaultSettings>
-  <Permissions>Restricted</Permissions>
+  <Permissions>ReadWriteDocument</Permissions>
 </OfficeApp>

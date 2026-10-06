@@ -2,7 +2,7 @@ import { Fragment, memo, useMemo } from 'react'
 import { fileMediaUrl } from '@deepseek-ai/dsh-util-workspace-path'
 import type { ReactNode } from 'react'
 import { JsonBlock, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { MarkdownFileMentions, MarkdownPathImages } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { MarkdownCellCitations, MarkdownFileMentions, MarkdownPathImages } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatNodeOwnerProps, ChatViewSlotProps, UseDisclosure, UsePresentation } from '../contract/slots.ts'
 import type { AssistantBlock } from '../contract/snapshot.ts'
 import { markdownLabels } from '../markdown-labels.ts'
@@ -46,6 +46,8 @@ export interface AssistantMarkdownProps {
   revealProcess?: (() => void) | undefined
   /** Resolved prose file mentions for this Assistant's closing turn. */
   mentions?: MarkdownFileMentions | undefined
+  /** Workbook-bound citation controls; ordinary clients leave this absent. */
+  cellCitations?: MarkdownCellCitations | undefined
   /** The owning view's locale seat, passed down as a plain prop. */
   t: ChatViewSlotProps['t']
 }
@@ -53,7 +55,7 @@ export interface AssistantMarkdownProps {
 /** Reasoning block as the Think variant summary row (figma 39:28304). */
 export const AssistantMarkdown = memo(function AssistantMarkdown({
   blocks, streaming, interrupted, renderMessageImages, groupPart, useDisclosure,
-  reasoningHidden = false, usePresentation, revealProcess, mentions, t,
+  reasoningHidden = false, usePresentation, revealProcess, mentions, cellCitations, t,
 }: AssistantMarkdownProps) {
   // Stable per locale revision (t identity changes on switch): a fresh object
   // per render would rebuild MarkdownText's component table every chunk.
@@ -86,6 +88,7 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
             labels={labels}
             fileMentions={mentions}
             pathImages={pathImages}
+            cellCitations={cellCitations}
           />,
         )
         break

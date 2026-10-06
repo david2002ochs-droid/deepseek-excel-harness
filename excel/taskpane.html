@@ -12,9 +12,14 @@
   </head>
   <body>
     <iframe title="DeepSeek Harness" id="harness"></iframe>
-    <script>
+    <script type="module">
+      import { installExcelContextBridge } from './context.mjs';
       Office.onReady(() => {
-        document.getElementById('harness').src = __EXCEL_HARNESS_URL__;
+        const frame = document.getElementById('harness');
+        const url = new URL(__EXCEL_HARNESS_URL__);
+        const dispose = installExcelContextBridge({ window, frame, office: Office, excel: Excel, origin: url.origin });
+        window.addEventListener('pagehide', dispose, { once: true });
+        frame.src = url.href;
       });
     </script>
   </body>

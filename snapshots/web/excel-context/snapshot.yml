@@ -1,0 +1,8 @@
+version: 1
+scenario: excel-context
+profile: web
+composition: web-excel
+recording: authored
+header:
+  class: web-excel
+  pin: true

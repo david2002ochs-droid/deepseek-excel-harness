@@ -1,0 +1,7 @@
+# Opt in only the Excel development launch to the taskpane metadata bridge.
+- id: ui-conversation
+  config:
+    maxConcurrentFileUploads: 2
+    excelContext:
+      parentOrigin: https://localhost:3443
+      timeoutMs: 10000

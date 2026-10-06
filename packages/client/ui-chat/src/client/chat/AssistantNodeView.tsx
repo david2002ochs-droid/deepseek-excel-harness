@@ -1,19 +1,22 @@
 import { memo, useCallback, useMemo } from 'react'
 import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ChatNodeViewProps, PresentationInjected, TurnTailOwnerProps } from '../contract/slots.ts'
+import type { CellCitationsInjected, ChatNodeViewProps, TurnTailOwnerProps } from '../contract/slots.ts'
 import { AssistantMarkdown } from './AssistantMarkdown.tsx'
 
-type AssistantNodeViewProps = ChatNodeViewProps<'assistant-step'> & InjectFace<PresentationInjected>
+type AssistantNodeViewProps = ChatNodeViewProps<'assistant-step'> & InjectFace<CellCitationsInjected>
 
 /** Streaming, settled, and interrupted Assistant states share one keyed renderer instance. */
 export const AssistantNodeView = memo(function AssistantNodeView({
-  node, groupPart, useDisclosure, useTurnData, turnProcess, openFile, renderMessageImages, fileMentions, usePresentation, t,
+  node, cellCitations, groupPart, useDisclosure, useTurnData, useStepData, turnProcess, openFile,
+  renderMessageImages, fileMentions, usePresentation, t,
 }: AssistantNodeViewProps) {
   const data = node.data
   const turn = node.location.kind === 'turn' || node.location.kind === 'step'
     ? node.location.turn
     : undefined
   const tail = useTurnData('turn-tail')
+  const workbookId = useStepData('excelWorkbook')?.workbookId
+  const citations = workbookId === undefined ? undefined : cellCitations(workbookId)
   const owner = useMemo<TurnTailOwnerProps | undefined>(() => {
     if (turn?.status !== 'closed' || data.finalNode === undefined) return undefined
     if (tail?.closing?.finalNode.seq !== data.finalNode.seq) return undefined
@@ -41,6 +44,7 @@ export const AssistantNodeView = memo(function AssistantNodeView({
       usePresentation={usePresentation}
       revealProcess={revealProcess}
       mentions={mentions}
+      cellCitations={citations}
       t={t}
     />
   )

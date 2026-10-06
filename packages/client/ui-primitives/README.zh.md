@@ -25,6 +25,10 @@ kind: "package-library"
 <a id="use-this-package"></a>
 ## 使用本包
 
+`projectUserText` 将经过验证且大小受限的 `[Excel context]` 记录折叠为内联标签，显示包含工作表名称的选区地址。这只是显示投影：持久化用户文本、导出与提供方历史保留完整工作簿绑定与捕获选区。无效或超限记录仍作为普通文本显示。
+
+`MarkdownText.cellCitations` 是可选的 owner-scoped 导航回调，用于落定的 Assistant 文本。有效的 `[[cite:Sheet1!A1:B2]]` token 只在代码与链接节点之外变为按钮；支持带引号的工作表名与绝对 A1 引用。外部、格式错误、反向与越界地址保留为文本。流式输出及未提供回调的调用方保留字面 token。Owner 提供回复的工作簿绑定、操作生命周期与本地化失败提示。
+
 `Toast` 在浅色和深色模式下均使用主题的系统提示背景与文字颜色。`Menu` 数据条目与 `MenuItemButton` 组件条目接收功能 owner 提供的有效快捷键，并在末端以无背景的浅灰色文字对齐显示，子菜单也采用同一呈现。`ShortcutKeys` 默认以无方块的按键文字显示菜单和行内提示。`tooltip` 变体在深色气泡上使用稍浅的键帽，以加号连接的组合则共用一个填充色块。`Tooltip.shortcutKeys` 将键帽与可选的本地化操作文本垂直居中排列，标签为空时只显示按键。可选的 `className` 供调用方设置交互状态样式。`Modal` 使用框架共享的浮层起点，视口边距至少为 24px。其遮罩不绘制 Windows 顶栏区域，覆盖整个视口的模态层仍阻挡背景点击。`Modal` 与设置外壳通过 `useModalLayer` 共用顶层 Esc 和 Tab 处理，关闭时恢复先前焦点。`closeTopModal(document)` 请求前台弹窗当前的关闭操作；上层菜单或未注册的对话框会阻止关闭其后方弹窗。组件通过 `isBehindModal` 避免将焦点移到嵌套弹窗后方。菜单先消费自己的 Esc，再由模态层处理关闭。 `observeComposition` 为局部弹层和录键处理提供相同的 composition-end 与旧版 IME 保护；调用方随交互生命周期释放其 document 监听。
 
 弹窗自动进入及弹窗、菜单回焦，包括通过 Esc 和应用关闭快捷键触发的回焦，均使用 `focusWithoutRing(element, options?)`，在 Tab 或方向键导航恢复正常焦点样式前抑制外轮廓线。弹窗容器仍不绘制焦点外框。原有边框、阴影和错误状态保持不变。用 `data-modal-autofocus` 标记弹窗的初始控件，让模态层先保存触发控件，再移动焦点。随弹窗挂载的控件不得使用 React `autoFocus`，因为它会在保存触发控件前执行。弹窗容器获得焦点时，Tab 和 Shift+Tab 分别进入第一个和最后一个可聚焦控件。

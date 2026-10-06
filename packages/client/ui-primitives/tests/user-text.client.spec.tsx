@@ -16,6 +16,18 @@ const project = (
   render(<div data-host>{projectUserText(text, labels, slashNames, slashKind)}</div>).container.querySelector('[data-host]')!
 
 describe('projectUserText', () => {
+  it('folds valid logged Excel context into a selection chip while preserving surrounding user text', () => {
+    const context = { workbook: { id: 'book-1' }, worksheet: { id: 'sheet-1', name: 'Forecast' },
+      selection: { workbookId: 'book-1', address: "'Forecast'!A1:B4" }, observedAt: '2026-10-06T12:00:00.000Z' }
+    const raw = `[Excel context]\n${JSON.stringify(context)}\nCite Excel cells as [[cite:Sheet1!A1:B2]] (quote worksheet names with spaces).\n[/Excel context]`
+    const host = project(`Summarize\n\n${raw}`)
+    expect(host.querySelector('[data-ref-chip="excel"]')?.textContent).toBe("'Forecast'!A1:B4")
+    expect(host.textContent).toBe("Summarize\n\n'Forecast'!A1:B4")
+    expect(host.textContent).not.toContain('workbook')
+    const malformed = project('[Excel context]\n{"selection":{"address":"A1"}}\n[/Excel context]')
+    expect(malformed.querySelector('[data-ref-chip="excel"]')).toBeNull()
+    expect(malformed.textContent).toContain('"selection"')
+  })
   it('keeps decorated text inline and preserves whitespace between references', () => {
     const host = project('反反复复 /dsh-acp-test @执行几个命令测试', ['执行几个命令测试'], ['dsh-acp-test'])
     expect(host.querySelectorAll('div').length).toBe(0)

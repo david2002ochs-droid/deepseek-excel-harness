@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-06-excel-message-context.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-10-06-excel-message-context.md
+/agent-note-small-excel-message-context-and-bound-cell-citations:
+  en: f4778b8e6a2a5dcb
+  zh: 22524d08c60560e2
+/agent-note-small-excel-message-context-and-bound-cell-citations/problem:
+  en: 0bb3db882490121f
+  zh: 7d75d3d7d215740f
+/agent-note-small-excel-message-context-and-bound-cell-citations/decision:
+  en: 40a116a16cf8103d
+  zh: 8c4a2f280ce1eaf2
+/agent-note-small-excel-message-context-and-bound-cell-citations/alternatives-considered:
+  en: 28f38b8c7ad5d422
+  zh: d6477357a0a1eed8
+/agent-note-small-excel-message-context-and-bound-cell-citations/consequences:
+  en: e3a8991ad9522ed5
+  zh: 5d464dd0215dca2f

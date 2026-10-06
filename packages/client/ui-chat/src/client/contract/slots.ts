@@ -2,7 +2,7 @@
 import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
 import type { SessionId, SessionSeq } from '@deepseek-ai/dsh-session/types'
 import type {
-  CommandNode, CompactionSummaryNode, ConversationLocationDataStore, ConversationTurnDataMap,
+  CommandNode, CompactionSummaryNode, ConversationLocationDataStore, ConversationStepDataMap, ConversationTurnDataMap,
   ConversationGroupData, GroupSnapshot,
   MessageImageLoader, MessageImagesOwnerProps, RenderMessageImages, TurnLocation,
 } from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -130,6 +130,11 @@ export type UseChatNodeTurnData = <Key extends Extract<keyof ConversationTurnDat
   key: Key,
 ) => Readonly<ConversationTurnDataMap[Key]> | undefined
 
+/** Hook constrained to business data published on the current Chat Node's Step. */
+export type UseChatNodeStepData = <Key extends Extract<keyof ConversationStepDataMap, string>>(
+  key: Key,
+) => Readonly<ConversationStepDataMap[Key]> | undefined
+
 /**
  * Subscribe to enclosing-Turn resets and own one initially collapsed disclosure.
  * Each invocation has independent open state; display-mode changes do not reset it.
@@ -145,6 +150,7 @@ export type UseDisclosure = () => {
 /** Stable sources bound to one rendered Chat Node. */
 export interface ChatNodeHookContext {
   readonly turnData: ConversationLocationDataStore<ConversationTurnDataMap> | undefined
+  readonly stepData: ConversationLocationDataStore<ConversationStepDataMap> | undefined
   readonly disclosureReset: ObservableSnapshot<number>
 }
 
@@ -152,6 +158,7 @@ export interface ChatNodeHookContext {
 export interface ChatNodeInjected {
   hooks: {
     turnData: SlotHookFactory<'conversation.chat.node', UseChatNodeTurnData>
+    stepData: SlotHookFactory<'conversation.chat.node', UseChatNodeStepData>
     disclosure: SlotHookFactory<'conversation.chat.node', UseDisclosure>
   }
 }
@@ -195,6 +202,11 @@ export interface PresentationInjected {
     /** Live presentation policy derived from the accepted work-details mode. */
     presentation: ObservableSnapshot<ChatPresentationPolicy>
   }
+}
+
+/** Assistant-local citation adapter derives its workbook from logged turn input. */
+export interface CellCitationsInjected extends PresentationInjected {
+  cellCitations: (workbookId: string) => import('@deepseek-ai/dsh-client-ui-primitives').MarkdownCellCitations | undefined
 }
 
 /** Full props of one keyed Chat renderer. */

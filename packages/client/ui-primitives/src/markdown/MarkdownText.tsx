@@ -23,6 +23,8 @@ import {
 import type { MarkdownFileMentions, MarkdownLabels, MarkdownPathImages, MarkdownRenderContext, ReferenceTargets } from './render.tsx'
 import 'katex/dist/katex.min.css'
 import css from './MarkdownText.module.css'
+import type { MarkdownCellCitations } from './cell-citations.tsx'
+export type { MarkdownCellCitations } from './cell-citations.tsx'
 
 export type { MarkdownCodeLabels, MarkdownFileMentions, MarkdownLabels, MarkdownPathImages } from './render.tsx'
 
@@ -32,6 +34,7 @@ function renderSettled(
   labels: MarkdownLabels,
   fileMentions: MarkdownFileMentions | undefined,
   pathImages: MarkdownPathImages | undefined,
+  cellCitations: MarkdownCellCitations | undefined,
 ): ReactNode[] {
   const root = parseGfmWithMath(text)
   const targets = createReferenceTargets()
@@ -41,6 +44,7 @@ function renderSettled(
     labels,
     fileMentions,
     pathImages,
+    cellCitations,
     targets,
     footnoteOrder: [],
     footnoteCounts: new Map(),
@@ -167,18 +171,21 @@ class StreamingRenderer {
  * `body` variant uses the full document typography.
  * The provider's `openFile` enables local Markdown links in settled messages,
  * including `#L24` and `#L24-L30` destinations (ranges open at their first line).
+ * `cellCitations` enables bounded Excel citation controls in settled text nodes
+ * outside code and links; its owner binds each callback to the originating workbook.
  * @returns A GFM document with TeX math rendered through KaTeX; raw HTML and
  * unsafe protocols are disabled. Local links without an opener remain text;
  * absolute HTTP(S) images render directly.
  */
 export const MarkdownText = memo(function MarkdownText({
-  text, streaming = false, labels, fileMentions, pathImages, variant = 'body',
+  text, streaming = false, labels, fileMentions, pathImages, cellCitations, variant = 'body',
 }: {
   text: string
   streaming?: boolean
   labels: MarkdownLabels
   fileMentions?: MarkdownFileMentions | undefined
   pathImages?: MarkdownPathImages | undefined
+  cellCitations?: MarkdownCellCitations | undefined
   variant?: 'body' | 'compact'
 }) {
   const streamRef = useRef<StreamingRenderer | null>(null)
@@ -186,14 +193,14 @@ export const MarkdownText = memo(function MarkdownText({
   const children = useMemo(() => {
     if (!streaming) {
       streamRef.current = null
-      return renderSettled(text, labels, fileMentions, pathImages)
+      return renderSettled(text, labels, fileMentions, pathImages, cellCitations)
     }
     if (streamRef.current === null || streamLabelsRef.current !== labels) {
       streamRef.current = new StreamingRenderer(labels)
       streamLabelsRef.current = labels
     }
     return streamRef.current.render(text)
-  }, [text, streaming, labels, fileMentions, pathImages])
+  }, [text, streaming, labels, fileMentions, pathImages, cellCitations])
   return <div className={clsx(css.markdown, variant === 'compact' && css.compact)}
     data-markdown-variant={variant === 'compact' ? variant : undefined}>{children}</div>
 })

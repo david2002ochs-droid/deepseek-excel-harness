@@ -50,9 +50,9 @@ try {
   env.DSH_HOME = home
   await launch({
     // Same supported dsh CLI/profile entry used by the repository's dsh script.
-    backend: { command: process.execPath, args: ['--import', 'tsx/esm', 'apps/cli/src/bin.ts', '--profile', 'web', '--no-open', '--host', '127.0.0.1', '--port', '3080', '--public-url', 'https://localhost:3443', '--trusted-host', 'localhost:3443'], cwd: root },
+    backend: { command: process.execPath, args: ['--import', 'tsx/esm', 'apps/cli/src/bin.ts', '--profile', 'web', '--patch', join(directory, 'context.patch.yml'), '--no-open', '--host', '127.0.0.1', '--port', '3080', '--public-url', 'https://localhost:3443', '--trusted-host', 'localhost:3443'], cwd: root },
     wrapper: { command: process.execPath, args: [join(directory, 'serve.mjs')], cwd: directory },
-    sideload: { command: process.execPath, args: [npm, 'exec', '--yes', '--package=office-addin-debugging@7.0.1', '--', 'office-addin-debugging', 'start', 'manifest.xml', 'desktop', '--app', 'excel', '--no-debug', '--no-live-reload', '--dev-server-port', '3443'], cwd: directory },
+    sideload: { command: process.execPath, args: [join(directory, 'sideload.mjs')], cwd: directory },
     env, signal: controller.signal, timeoutMs: 120000,
     report: message => console.log(message),
   })

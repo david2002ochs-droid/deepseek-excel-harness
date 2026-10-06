@@ -6,10 +6,14 @@
     "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
   },
   "files": [
+    "src/excel-config.ts",
     "src/submission-settings.ts",
     "src/index.ts"
   ],
   "references": [
+    {
+      "path": "../../host/webserver"
+    },
     {
       "path": "../../../vendor/cordis"
     },

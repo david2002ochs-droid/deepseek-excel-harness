@@ -45,6 +45,8 @@ export interface SessionInputDeps {
   submissionState?: () => MessageSubmissionState
   /** Notify one ordinary message attempt before reference serialization. */
   messageSubmitted?: (submission: MessageSubmission) => void
+  /** Begin context capture at the gesture; the result joins this message only. */
+  captureMessageContext?: (signal: AbortSignal) => Promise<string> | undefined
   /** Enter adjudication face resolver; absent/undefined answer = every '/' line falls to the default sink. */
   inputTriggers?: (() => InputTriggerController | undefined) | undefined
   /** PopupSelect shell face resolver (dismissal on submit lock / escape). */
@@ -153,6 +155,7 @@ export class SessionInputShell implements SessionInput {
   private filePicker: Parameters<ComposerKeyboard['bindFilePicker']>[0] | undefined
   /** Default sends retained until admission settles or scope disposal releases their attachments. */
   private readonly detachedDrafts = new Map<number, DetachedDraft>()
+  private readonly messageContexts = new WeakMap<SubmitAttempt, Promise<SubmitOutcome> | undefined>()
   /** Failed default sends waiting to be restored together in submission order. */
   private readonly failedDetached = new Map<number, DetachedDraft>()
   /** Revision of the last automatic failure restoration. */
@@ -357,7 +360,12 @@ export class SessionInputShell implements SessionInput {
         this.attachmentFlights.set(flight, { controller, attachmentIds })
         this.commitSend(attachmentIds)
         this.notifySubmission(submission)
-        void this.deps.defaultSink('', attachmentIds, mode, controller.signal).then((outcome) => {
+        const context = this.captureContext(controller.signal)
+        const pending = context === undefined
+          ? this.deps.defaultSink('', attachmentIds, mode, controller.signal)
+          : context.then(result => result.kind === 'error' || controller.signal.aborted
+            ? result : this.deps.defaultSink(result.text ?? '', attachmentIds, mode, controller.signal))
+        void pending.then((outcome) => {
           if (this.disposed || !this.attachmentFlights.delete(flight)) return
           if (outcome.kind === 'success') return
           this.restoreAttachments(attachmentIds)
@@ -645,6 +653,7 @@ export class SessionInputShell implements SessionInput {
         return
       }
       case 'adjudicate': {
+        void this.contextFor(fx.attempt)
         this.adjudicate(fx.attempt, fx.draft)
         return
       }
@@ -690,6 +699,7 @@ export class SessionInputShell implements SessionInput {
     mode: InputSubmitMode,
   ): void {
     this.notifySubmission(attempt.submission)
+    void this.contextFor(attempt)
     const attachmentIds = [...this.attachmentIds]
     this.attachmentIds = []
     const occurrences = this.projection.occurrences
@@ -700,7 +710,7 @@ export class SessionInputShell implements SessionInput {
       this.failedRestoreRev = undefined
     }
     if (occurrences.length === 0) {
-      this.settleSink(attempt, this.deps.defaultSink(draft.trim(), attachmentIds, mode, attempt.signal))
+      this.sendWithContext(attempt, draft.trim(), attachmentIds, mode)
       return
     }
     const inputTriggers = this.deps.inputTriggers?.()
@@ -724,7 +734,7 @@ export class SessionInputShell implements SessionInput {
           cursor = part.offset + part.length
         }
         out += draft.slice(cursor)
-        this.settleSink(attempt, this.deps.defaultSink(out.trim(), attachmentIds, mode, attempt.signal))
+        this.sendWithContext(attempt, out.trim(), attachmentIds, mode)
       },
       (error: unknown) => {
         if (this.dead(attempt)) return
@@ -737,6 +747,39 @@ export class SessionInputShell implements SessionInput {
   private notifySubmission(submission: MessageSubmission | undefined): void {
     if (submission === undefined) return
     try { this.deps.messageSubmitted?.(submission) } catch (_error) { /* Notification consumers cannot interrupt submission. */ }
+  }
+
+  private captureContext(signal: AbortSignal): Promise<SubmitOutcome> | undefined {
+    try {
+      return this.deps.captureMessageContext?.(signal)?.then(
+        text => ({ kind: 'success', text }),
+        (error: unknown) => ({ kind: 'error', text: error instanceof Error ? error.message : String(error) }),
+      )
+    } catch (error) {
+      return Promise.resolve({ kind: 'error', text: error instanceof Error ? error.message : String(error) })
+    }
+  }
+
+  private contextFor(attempt: SubmitAttempt): Promise<SubmitOutcome> | undefined {
+    if (this.messageContexts.has(attempt)) return this.messageContexts.get(attempt)
+    const pending = this.captureContext(attempt.signal)
+    this.messageContexts.set(attempt, pending)
+    return pending
+  }
+
+  private sendWithContext(
+    attempt: SubmitAttempt,
+    text: string,
+    attachmentIds: readonly DraftAttachmentId[],
+    mode: InputSubmitMode,
+  ): void {
+    const context = this.contextFor(attempt)
+    const pending = context === undefined
+      ? this.deps.defaultSink(text, attachmentIds, mode, attempt.signal)
+      : context.then(result => result.kind === 'error' || this.dead(attempt)
+        ? result
+        : this.deps.defaultSink(result.text === undefined ? text : `${text}\n\n${result.text}`, attachmentIds, mode, attempt.signal))
+    this.settleSink(attempt, pending)
   }
 
   /** Settle one detached default send independently of other sends. */

@@ -150,16 +150,34 @@ selector 必须是 owner currency 的纯函数。非 null 返回值作为 `match
 
 `InputActions.captureInsertion()` 捕获草稿选区与版本；`insertText(text, span)` 仅在版本未变且编辑器允许编辑时，插入一次可撤销的纯文本编辑。异步消费者在插入被拒绝后负责保留结果，等待用户操作。
 
+`conversation/message-context` 是 scoped bail 事件，在普通消息提交动作发生时同步调用，早于引用序列化与斜线命令仲裁。贡献者返回捕获 Promise；结果文本加入同一条持久化用户消息。捕获失败会恢复草稿并阻止接收。`excelContext: { parentOrigin, timeoutMs }` 启用可信 Excel 父窗口桥接。Host 配置通过公开的 `webserver/index-inject` 全局值，在插件启动前传给浏览器；浏览器 entry 配置不会继承 Host 配置。部署配置变更需要重新加载页面。首条和后续消息只携带工作簿绑定、活动工作表、捕获时间与包含工作表名称的精确选区引用；上下文 JSON 限制为 2,048 UTF-8 字节。桥接验证父窗口 origin、窗口来源、请求身份与载荷结构。独立打开的文档行为不变。聊天气泡和队列预览将日志中的上下文折叠为选区标签；日志导出与模型历史保留完整文本。
+
+显式启用的插件在 Conversation Context 中累积每条人工输入的工作簿绑定，并在首个 Assistant 输出边界发布 `excelWorkbook` Step 数据。之后的 steering 不会改变已有回复的绑定；下一 Step 使用自己的最近输入，未捕获的输入不具备导航权限。重放与历史扩展重建相同的绑定。`conversation/excel-citations(workbookId)` 提供 Chat 使用的 scoped 导航 owner。在捕获期间、另一导航进行中或 Session 运行时禁止导航；拒绝与超时会显示本地化的输入框提示。
+
 `conversation.input.activity` 在模型选择器与发送按钮之间承载一个控件。其 `onActiveChange` 回调将控件展开至整条工具栏并隐藏普通辅助控件和上下文用量按钮，同时保留编辑器与提交按钮。关闭活动后恢复这些控件，上下文详情保持关闭。首页输入框下方没有内容时，该区域保持收起。占用者在卸载时释放展开状态，并拥有活动专属反馈。
 
 <a id="model-experience"></a>
 ## 模型体验
 
-无，因为本包渲染浏览器状态，并通过 Session Controller API 发送用户确认提交的输入，而不构造模型请求。
+### 捕获的 Excel 输入上下文
+
+#### 模型看见什么
+
+在嵌入文档中启用 `excelContext` 时，普通 `user/message` 文本以 `[Excel context]` 结尾：其后是一行 JSON，包含 `workbook.id`、可选 `workbook.name` 与 `workbook.path`、`worksheet.id` 与 `worksheet.name`、`selection.workbookId` 与 `selection.address` 以及 `observedAt`，再跟随下方固定指令与 `[/Excel context]`。元数据描述本次提交捕获的工作簿与选区，不包含工作簿值、公式、VBA 或能力目录。相同文本保留在 Session 重放、日志导出与普通模型历史投影中。
+
+##### 引用指令
+
+```markdown
+Cite Excel cells as [[cite:Sheet1!A1:B2]] (quote worksheet names with spaces).
+```
+
+#### Token 影响
+
+每条普通消息最多增加 2,048 UTF-8 字节上下文 JSON，加上固定包装与引用指令。首条消息提供初始工作簿绑定，不增加额外 turn。未启用与独立打开的客户端不添加上下文。上下文保留在普通历史中，直至消费者对其压缩或替换。
 
 #### KV Cache 影响
 
-无；Conversation 组装和浏览器输入状态不会改变提供方侧的 prompt cache。
+每次捕获的选区都会追加用户消息文本，不替换系统 prompt 或此前的历史。
 
 ## 已知限制与暂缓事项
 
@@ -167,6 +185,7 @@ selector 必须是 owner currency 的纯函数。非 null 返回值作为 `match
 
 - **只有已注册 target 可以渲染**——除已注册的 `chat` 偏好外，shell 刻意不提供隐式 fallback target。
 - **Factory occurrence 继承渲染位置的 Session**——`conversation.content` 不接受独立寻址的 Session；该能力需要单独的 Session provider。
+- **命令 claim 使用自己的输入合同**——捕获的输入上下文加入普通消息及未解析为命令的斜线输入，不加入 `/goal` 或 `/plan` 命令参数。
 
 
 <a id="dev-note"></a>
