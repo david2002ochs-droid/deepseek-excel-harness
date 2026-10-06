@@ -1,4 +1,21 @@
-# Opt in only the Excel development launch to the taskpane metadata bridge.
+# Excel launch: Standard agents and the taskpane metadata bridge.
+- id: preset-minimal
+  disabled: true
+
+- id: preset-ptc
+  disabled: true
+
+- id: preset-cordis
+  disabled: true
+
+- id: agent-preset-registry
+  config:
+    default: standard
+    selectedDefault: standard
+
+- id: ui-agent-preset
+  disabled: true
+
 - id: ui-conversation
   config:
     maxConcurrentFileUploads: 2
